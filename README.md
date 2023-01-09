@@ -8,5 +8,5 @@ Code for a C program to send a UDP packet to a Python program. Will be used for 
 ```python3 server.py```
 
 ### Compile & run c client code
-```gcc client.c -o client```
-```./client```
+```gcc client.c -o client  
+./client```
