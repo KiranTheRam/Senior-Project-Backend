@@ -12,5 +12,7 @@ python3 server.py
 ### Compile & run c client code
 ```
 gcc client.c -o client
+```
+```
 ./client
 ```
