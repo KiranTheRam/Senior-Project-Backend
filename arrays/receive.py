@@ -17,7 +17,7 @@ while True:
     deserialized_data = pickle.loads(data)
     print("received message:", deserialized_data)
 
-    room_info = '{"roomID": ' + deserialized_data[0] + ', "distance": ' + deserialized_data[2] + ', "deviceID":' + deserialized_data[1] + '}'
+    room_info = '{"sensorID": ' + deserialized_data[0] + ', "distance": ' + deserialized_data[2] + ', "deviceID":' + deserialized_data[1] + '}'
     response = requests.post(api_url, json.loads(room_info))
 
     print(response.json())
