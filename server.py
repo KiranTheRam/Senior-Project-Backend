@@ -1,47 +1,68 @@
-# UDP Listener
+import json
 import socket
+import requests
+import re
+from datetime import datetime
 
+# UDP_IP = "127.0.0.1"
+UDP_IP = "10.1.12.195"
 
-def UDP_Listener():
-    # Setting up address, port, and buffer values
-    localIP = "127.0.0.1"
-    localPort = 4455
-    bufferSize = 1024
+UDP_PORT = 5000
 
-    # Message to be sent to a client that connects
-    msgFromServer = "You have connected to the server on localhost"
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP
+sock.bind((UDP_IP, UDP_PORT))
 
-    # Turning the message into bytes
-    bytesToSend = str.encode(msgFromServer)
+print("Listening...")
+while True:
+    data, addr = sock.recvfrom(128)
 
-    # Create a UDP datagram socket
-    UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-    # UDPServerSocket.sendto(bytes("Hello there", "utf-8"), ("127.0.0.1", 4455))
+    decoded_data = data.decode("ISO-8859-1")
+    #print(decoded_data)
+    decoded_data = re.search("\{(.*?)\}", decoded_data)
+    print("Received: %s" % decoded_data.group())
+    json_value = json.loads(decoded_data.group())
 
-    # Bind the socket to the IP and Port specified above
-    UDPServerSocket.bind((localIP, localPort))
+    # Map values
+    sensorID = json_value["sensorID"]
+    deviceID = json_value["phoneID"]
+    distance = json_value["distance"]
 
-    print("UDP server is operational, listening for client. . .")
+    print("\nMapped Values from JSON:")
+    print("SensorID: " + sensorID)
+    print("DeviceID: " + deviceID)
+    print("Distance: " + distance)
 
-    # Listen for incoming datagrams
-    while (True):
-        # Receive _____
-        bytesAddressPair = UDPServerSocket.recvfrom(bufferSize)
+    print("\nSending GET request for more info")
+    api_url = "https://uwb-react-app-weuz.vercel.app/api/sensors/getbyid"
+    # Body to be used in "get" request
+    getSensorReq = '{"sensorID": \"' + sensorID + '\"}'
+    response = requests.post(api_url, json.loads(getSensorReq))
+    print(response.json())
+    # Get the current date and time
+    now = datetime.now()
+    current_time = now.strftime("%d/%m/%Y %H:%M:%S")
 
-        # Gathering message and address from the client
-        message = bytesAddressPair[0]
-        address = bytesAddressPair[1]
+    # Mapping returned data tied to the sensor
+    sensor_info = response.json()
+    roomID = sensor_info[0]["roomID"]
+    latitude = sensor_info[0]["latitude"]
+    longitude = sensor_info[0]["longitude"]
+    buildingID = sensor_info[0]["buildingID"]
 
-        clientMsg = "Message from Client:{}".format(message)
-        clientIP = "Client IP Address:{}".format(address)
+    print("\nMapped Values from GET:")
+    print("RoomID: " + roomID)
+    print("Lat: " + latitude)
+    print("Long: " + longitude)
+    print("Time: " + current_time)
+    print("BuildingID: " + buildingID)
 
-        print(clientMsg)
-        print(clientIP)
+    print("POSTing new information to DB")
+    api_url = "https://uwb-react-app-weuz.vercel.app/api/roomreports/newreport"
+    # Body to be used in POST request that updates room data
+    room_info = '{ "tagID": "100", "buildingID": \"' + buildingID + '\", "roomID": \"' + roomID + '\", "lat": \"' + latitude + '\", "long": \"' + longitude + '\", "time": \"' + current_time + '\", "distance": \"' + distance + '\", "deviceID": \"' + deviceID + '\"} '
+    print(room_info)
+    response = requests.post(api_url, json.loads(room_info))
+    print(response)
+    print(response.json())
 
-        # Sending reply to client
-        UDPServerSocket.sendto(bytesToSend, address)
-
-if __name__ == '__main__':
-    print('Hello')
-    UDP_Listener()
-
+    print("_______________\n")
