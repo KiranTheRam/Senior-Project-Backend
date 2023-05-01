@@ -1,4 +1,5 @@
-# UDP-Client-Server
+# Senior Project Backend
+The Python server and UWB Sensor code for my university senior project
 ## TestRadio.tx
 C code for "anchor" sensors, which should be placed in the center of every room in a building.  
 Runs on a timer, pinging phones' locations every second
